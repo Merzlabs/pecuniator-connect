@@ -5,9 +5,7 @@ var peerConnection = new RTCPeerConnection(configuration);
 
 //Signaling
 socket.on('registered', (id) => {
-    console.log('registered/joined', id);
-    document.getElementById('sessionId').value = id;
-
+    console.log('joined', id);
     setup();
 });
 
@@ -17,6 +15,9 @@ function register() {
     if (document.getElementById('sessionId').value) {
         id = document.getElementById('sessionId').value
         isSender = false;
+        setup();
+    } else {
+        document.getElementById('sessionId').value = id;
     }
 
     socket.emit('register', id);
@@ -29,33 +30,31 @@ function randomId() {
 
 //Setup WebRTC
 async function setup() {
-    if (isSender) {
-        socket.on('pair', setupCall);
+    socket.on('pair', setupCall);
 
-        const offer = await peerConnection.createOffer();
-        await peerConnection.setLocalDescription(offer);
-        socket.emit('pair', { 'offer': offer });
-    } else {
-        socket.on('pair', setupRecieve);
-    }
+    //hack needed?
+    const offer = await peerConnection.createOffer({offerToReceiveAudio: true});
+    await peerConnection.setLocalDescription(offer);
+    socket.emit('pair', { 'offer': offer });
+    socket.on('pair', setupRecieve);
 }
 
 
-async function setupCall (message) {
-    console.debug('pair call', message);
-    socket.removeListener('pair', setupCall);
-
-    if (message.answer && peerConnection.connectionState !== "stable") {
+async function setupCall(message) {
+    
+    if (message.answer && peerConnection.signalingState !== "stable") {
+        console.debug('pair call', message);
+        socket.removeListener('pair', setupCall);
         const remoteDesc = new RTCSessionDescription(message.answer);
         await peerConnection.setRemoteDescription(remoteDesc);
     }
 }
 
-async function setupRecieve (message) {
-    console.debug('pair recv', message);
-    socket.removeListener('pair', setupRecieve);
-
-    if (message.offer) {
+async function setupRecieve(message) {
+    console.debug("r", message)
+    if (message.offer && !isSender) {
+        console.debug('pair recv', message);
+        socket.removeListener('pair', setupRecieve);
         peerConnection.setRemoteDescription(new RTCSessionDescription(message.offer));
         const answer = await peerConnection.createAnswer();
         await peerConnection.setLocalDescription(answer);
@@ -72,8 +71,8 @@ peerConnection.addEventListener('icecandidate', event => {
 
 // Listen for remote ICE candidates and add them to the local RTCPeerConnection
 socket.on('pair', async message => {
-    console.log('pair ice', message);
     if (message.iceCandidate) {
+        console.log('pair ice', message);
         try {
             await peerConnection.addIceCandidate(message.iceCandidate);
         } catch (e) {

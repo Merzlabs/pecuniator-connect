@@ -22,11 +22,11 @@ io.on('connection', (socket) => {
         socket.join(id, () => {
             let rooms = Object.keys(socket.rooms);
             console.log(rooms);
-            io.sockets.in(id).emit('registered', id);
+            socket.broadcast.in(id).emit('registered', id);
         });
 
         socket.on('pair', (data) => {
-            io.sockets.in(id).emit('pair', data);
+            socket.broadcast.in(id).emit('pair', data);
         });
     });
 
