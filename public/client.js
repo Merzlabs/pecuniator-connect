@@ -1,7 +1,13 @@
-var socket = io();
+let socket = io();
 const configuration = { 'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }] }
-var isSender = true;
-var peerConnection = new RTCPeerConnection(configuration);
+let isSender = true;
+let peerConnection = new RTCPeerConnection(configuration);
+let sendChannel = peerConnection.createDataChannel('sendDataChannel');
+sendChannel.onopen = onSendChannelStateChange;
+sendChannel.onclose = onSendChannelStateChange;
+
+peerConnection.ondatachannel = receiveChannelCallback;
+let receiveChannel;
 
 //Signaling
 socket.on('registered', (id) => {
@@ -33,7 +39,7 @@ async function setup() {
     socket.on('pair', setupCall);
 
     //hack needed?
-    const offer = await peerConnection.createOffer({offerToReceiveAudio: true});
+    const offer = await peerConnection.createOffer({ offerToReceiveAudio: true });
     await peerConnection.setLocalDescription(offer);
     socket.emit('pair', { 'offer': offer });
     socket.on('pair', setupRecieve);
@@ -41,7 +47,7 @@ async function setup() {
 
 
 async function setupCall(message) {
-    
+
     if (message.answer && peerConnection.signalingState !== "stable") {
         console.debug('pair call', message);
         socket.removeListener('pair', setupCall);
@@ -71,7 +77,7 @@ peerConnection.addEventListener('icecandidate', event => {
 
 // Listen for remote ICE candidates and add them to the local RTCPeerConnection
 socket.on('pair', async message => {
-    if (message.iceCandidate) {
+    if (message.iceCandidate && peerConnection.remoteDescription) {
         console.log('pair ice', message);
         try {
             await peerConnection.addIceCandidate(message.iceCandidate);
@@ -89,3 +95,45 @@ peerConnection.addEventListener('connectionstatechange', event => {
         console.log(peerConnection);
     }
 });
+
+function sendData(data) {
+    sendChannel.send(data);
+    console.log('Sent Data: ' + data);
+}
+
+function closeDataChannels() {
+    console.log('Closing data channels');
+    sendChannel.close();
+    console.log('Closed data channel with label: ' + sendChannel.label);
+    receiveChannel.close();
+    console.log('Closed data channel with label: ' + receiveChannel.label);
+    peerConnection.close();
+    console.log('Closed peer connections');
+}
+
+function receiveChannelCallback(event) {
+    console.log('Receive Channel Callback');
+    receiveChannel = event.channel;
+    receiveChannel.onmessage = onReceiveMessageCallback;
+    receiveChannel.onopen = onReceiveChannelStateChange;
+    receiveChannel.onclose = onReceiveChannelStateChange;
+}
+
+function onReceiveMessageCallback(event) {
+    console.log('Received Message', event.data);
+}
+
+function onSendChannelStateChange() {
+    const readyState = sendChannel.readyState;
+    console.log('Send channel state is: ' + readyState);
+}
+
+function onReceiveChannelStateChange() {
+    const readyState = receiveChannel.readyState;
+    console.log(`Receive channel state is: ${readyState}`);
+}
+
+function sendBtn() {
+    const data = document.getElementById('data').value;
+    sendData(data);
+}
