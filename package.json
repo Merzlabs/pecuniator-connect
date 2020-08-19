@@ -3,7 +3,7 @@
     "version": "0.0.1",
     "description": "signaling server",
     "scripts": {
-        "start": "forever -w index.js --watchDirectory public/"
+        "start": "forever -w server.js --watchDirectory public/"
     },
     "dependencies": {
         "express": "^4.17.1",
