@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Pecuniator Encrypt Test</title>
+  </head>
+  <body>
+    <h1>TEST</h1>
+
+    <br>
+    <p>Public/Private Key</p>
+    <input id="key"></input>
+    <br>
+
+    <form>
+        Data
+      <br>
+      <input id="data"> 
+      <br>
+      <button type="button" onclick="encrypt()">Encrypt</button>
+      <button type="button" onclick="decrypt()">Decrypt</button>
+      <button type="button" onclick="digest()">Digest</button>
+    </form>
+
+    <p>Result</p>
+    <div id="result"></div>
+
+    <script src="encrypt.js"></script>
+  </body>
+</html>
