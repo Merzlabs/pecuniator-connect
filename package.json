@@ -1,5 +1,5 @@
 {
-    "name": "pecuniator-connect",
+    "name": "@merzlabs/pecuniator-connect",
     "version": "0.0.1",
     "description": "signaling server",
     "scripts": {
