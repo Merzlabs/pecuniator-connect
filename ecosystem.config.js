@@ -1,10 +1,8 @@
 module.exports = {
   apps : [{
+    name: "Pecuniator signaling server",
     script: 'server.js',
     watch: '.'
-  }, {
-    script: './service-worker/',
-    watch: ['./service-worker']
   }],
 
   deploy : {
