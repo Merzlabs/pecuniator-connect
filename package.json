@@ -2,6 +2,7 @@
     "name": "@merzlabs/pecuniator-connect",
     "version": "0.0.1",
     "description": "signaling server",
+    "repository": "https://github.com/Merzlabs/pecuniator-connect",
     "scripts": {
         "start": "forever -w server.js --watchDirectory public/"
     },
